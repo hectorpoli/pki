@@ -1,0 +1,52 @@
+SubCA y generando un CSR
+------------------------
+1) Generando una clave rsa de 2048
+openssl genrsa -out example.org.key 2048
+
+2) Inspeccionando la clave privada
+openssl rsa -in example.org.key -noout -text
+
+3) Generando la clave publica e inspeccionandola
+openssl rsa -in example.org.key -pubout -out example.org.pubkey
+openssl rsa -in example.org.pubkey -pubin -noout -text
+
+4) Generando el CSR (Certificate signing request) e inspeccionandolo
+openssl req -new -sha256 -key example.org.key -out example.org.csr
+openssl req -in example.org.csr -noout -text
+
+
+
+CA Key y Certificado auto firmado
+---------------------------------
+1) Generando la clave privada
+openssl genrsa -out ca.key 2048
+
+2) Certificado auto firmado
+openssl req -new -x509 -key ca.key -out ca.crt
+
+3) Firmando el csr
+echo 'ED4B4A80662B1B4C' > ca.srl
+openssl x509 -req -in example.org.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out example.org.crt
+
+4) Para que el certificado sea cargado en el navegador
+cat example.org.crt ca.crt > example.org.bundle.crt
+
+5) Verificando el certificado
+openssl x509 -in example.org.bundle.crt -noout -text
+
+También se puede firmar usando el archivo de configuración ca.conf
+
+mkdir newcerts
+touch index.txt
+echo '01' > serial
+openssl ca -config ca.cnf -out example.org.crt -infiles example.org.csr
+
+
+
+Validamos el certificado
+
+openssl verify -CAfile ca.crt oats.crt
+
+
+Referencia:
+https://gist.github.com/Soarez/9688998
